@@ -1,12 +1,14 @@
 import os
+import subprocess
+
 import requests
 import shutil
 import src.globals as g
 import zipfile
 from PyQt6.QtCore import QThread, pyqtSignal
 
-FFMPEG_DL = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
-
+# Update the FFmpeg URL to a Linux-compatible build
+FFMPEG_DL = "https://github.com/Tyrrrz/FFmpegBin/releases/download/7.1/ffmpeg-linux-x64.zip"
 
 class DownloadThread(QThread):
     update_log = pyqtSignal(str)
@@ -50,27 +52,15 @@ class DownloadThread(QThread):
         print("Installing FFmpeg...")
         zip_path = os.path.join(g.bin_dir, "ffmpeg.zip")
 
-        # Extract files
+        # Extract binaries
         with zipfile.ZipFile(zip_path, "r") as zip_file:
             zip_file.extractall(g.bin_dir)
         os.remove(zip_path)
+        os.remove(os.path.join(g.bin_dir, "ffplay"))
 
-        # Get extracted paths
-        extracted_root = os.path.join(g.bin_dir, os.listdir(g.bin_dir)[0])
-        extracted_bin = os.path.join(extracted_root, "bin")
-
-        # Move binaries to target directory
-        for file_name in os.listdir(extracted_bin):
-            src = os.path.join(extracted_bin, file_name)
-            dst = os.path.join(g.bin_dir, file_name)
-            try:
-                shutil.move(src, dst)
-            except:
-                print(f"Skipped {file_name} - file already exists")
-
-        # Cleanup
-        shutil.rmtree(extracted_root)
-        os.remove(os.path.join(g.bin_dir, "ffplay.exe"))
+        # Making them executable
+        subprocess.run(['chmod', '+x', os.path.join(g.bin_dir, "ffmpeg")])
+        subprocess.run(['chmod', '+x', os.path.join(g.bin_dir, "ffprobe")])
 
     def run(self):
         self.download_ffmpeg()

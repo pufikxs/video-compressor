@@ -19,14 +19,15 @@ build_exe_options = {
     "include_files": [("res", "res")],
 }
 
-base = "Win32GUI"
+# No base is required for Linux
+base = None
 
 executables = [
     Executable(
         "main.py",
         base=base,
-        target_name=f"CheezosVideoCompressor_v{g.VERSION}",
-        icon="res/icon.ico",
+        target_name=f"cheezos_video_compressor_v{g.VERSION}",
+        icon="res/icon.png",  # Remove icon or use a .png compatible with Linux, if required
     )
 ]
 

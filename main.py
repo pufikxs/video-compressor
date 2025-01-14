@@ -1,4 +1,5 @@
 import json
+import shutil
 import sys
 import os
 import psutil
@@ -56,7 +57,7 @@ class Window(QWidget):
         self.settings = load_settings()
         self.setFixedSize(WINDOW.w, WINDOW.h)
         self.setWindowTitle(g.TITLE)
-        icon_path = os.path.join(g.res_dir, "icon.ico")
+        icon_path = os.path.join(g.res_dir, "icon.png")
         self.setWindowIcon(QIcon(icon_path))
 
         # Select Button
@@ -207,24 +208,42 @@ class Window(QWidget):
         g.res_dir = os.path.join(g.root_dir, "res")
         print(f"Res: {g.res_dir}")
 
+    def check_binaries(self, binaries):
+        found_binaries = []
+        for binary in binaries:
+            path = shutil.which(binary)
+            if path:
+                found_binaries.append(path)
+                continue
+        return found_binaries
+
     def verify_ffmpeg(self):
         print("Verifying FFmpeg...")
-        FFMPEG_PATH = os.path.join(g.bin_dir, "ffmpeg.exe")
-        print(f"FFmpeg: {FFMPEG_PATH}")
-        FFPROBE_PATH = os.path.join(g.bin_dir, "ffprobe.exe")
-        print(f"FFprobe: {FFPROBE_PATH}")
 
-        if os.path.exists(FFMPEG_PATH) and os.path.exists(FFPROBE_PATH):
-            g.ffmpeg_installed = True
-            g.ffmpeg_path = FFMPEG_PATH
-            g.ffprobe_path = FFPROBE_PATH
-            self.reset()
+        binary_paths = self.check_binaries(["ffmpeg", "ffprobe"])
+
+        if len(binary_paths) == 2:
+            FFMPEG_PATH = binary_paths[0]
+            FFPROBE_PATH = binary_paths[1]
+
         else:
-            self.download_thread = DownloadThread()
-            self.download_thread.installed.connect(self.installed)
-            self.download_thread.update_log.connect(self.update_log)
-            self.download_thread.update_progress.connect(self.update_progress)
-            self.download_thread.start()
+            FFMPEG_PATH = os.path.join(g.bin_dir, "ffmpeg")
+            FFPROBE_PATH = os.path.join(g.bin_dir, "ffprobe")
+
+            if not os.path.exists(FFMPEG_PATH) or not os.path.exists(FFPROBE_PATH):
+                self.download_thread = DownloadThread()
+                self.download_thread.installed.connect(self.installed)
+                self.download_thread.update_log.connect(self.update_log)
+                self.download_thread.update_progress.connect(self.update_progress)
+                self.download_thread.start()
+
+        g.ffmpeg_installed = True
+        g.ffmpeg_path = FFMPEG_PATH
+        g.ffprobe_path = FFPROBE_PATH
+        self.reset()
+
+        print(f"FFmpeg: {FFMPEG_PATH}")
+        print(f"FFprobe: {FFPROBE_PATH}")
 
     def select_videos(self):
         file_paths, _ = QFileDialog.getOpenFileNames(
@@ -288,13 +307,13 @@ class Window(QWidget):
 
     def installed(self):
         g.ffmpeg_installed = True
-        g.ffmpeg_path = os.path.join(g.bin_dir, "ffmpeg.exe")
-        g.ffprobe_path = os.path.join(g.bin_dir, "ffprobe.exe")
+        g.ffmpeg_path = os.path.join(g.bin_dir, "ffmpeg")
+        g.ffprobe_path = os.path.join(g.bin_dir, "ffprobe")
         self.reset()
         n = Notify()
         n.title = "FFmpeg installed!"
         n.message = "You can now compress your videos."
-        n.icon = os.path.join(g.res_dir, "icon.ico")
+        n.icon = os.path.join(g.res_dir, "icon.png")
         n.send()
 
     def completed(self, aborted=False):
@@ -306,11 +325,11 @@ class Window(QWidget):
         n.message = (
             "Your videos are ready." if not aborted else "Your videos are cooked!"
         )
-        n.icon = os.path.join(g.res_dir, "icon.ico")
+        n.icon = os.path.join(g.res_dir, "icon.png")
         n.send()
 
         if not aborted:
-            os.startfile(g.output_dir)
+            os.system(f"xdg-open {g.output_dir}")
 
 
 if __name__ == "__main__":

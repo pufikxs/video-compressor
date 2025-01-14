@@ -42,11 +42,9 @@ def get_audio_bitrate(video_path):
         video_path,
     ]
 
-    # Run ffprobe and capture output
     output = subprocess.check_output(cmd)
     data = json.loads(output)
 
-    # Extract bitrate from JSON response
     if "streams" in data and len(data["streams"]) > 0:
         bitrate = data["streams"][0].get("bit_rate")
         return round(float(bitrate) / 1000) if bitrate else 0
@@ -78,13 +76,14 @@ class CompressionThread(QThread):
         try:
             cmd = [g.ffmpeg_path, "-hide_banner", "-encoders"]
             output = subprocess.check_output(cmd, universal_newlines=True)
+            print(output)
 
             if "h264_nvenc" in output:
                 return "h264_nvenc"
             elif "h264_qsv" in output:  # Intel QuickSync
                 return "h264_qsv"
-            elif "h264_amf" in output:  # AMD
-                return "h264_amf"
+            elif "h264_vaapi" in output:  # AMD/Intel VAAPI
+                return "h264_vaapi"
             else:
                 return None
 
@@ -97,11 +96,8 @@ class CompressionThread(QThread):
         file_name = os.path.basename(file_path)
 
         for i in range(2):
-            # Calculate total progress based on queue position and current pass
-            total_steps = len(g.queue) * 2  # Total number of passes for all videos
-            current_step = (
-                len(g.completed) * 2
-            ) + i  # Completed videos * 2 passes + current pass
+            total_steps = len(g.queue) * 2
+            current_step = (len(g.completed) * 2) + i
             progress_percentage = (current_step / total_steps) * 100
             self.update_progress.emit(int(progress_percentage))
             encoder_type = (
@@ -117,7 +113,6 @@ Bitrate: {video_rate}k
 Encoder: {encoder_type}
 """
 
-            # Rest of the existing code remains the same
             bitrate_str = f"{video_rate}k"
             file_name_without_ext, original_ext = os.path.basename(file_path).rsplit(
                 ".", 1
@@ -128,30 +123,30 @@ Encoder: {encoder_type}
             print(f"New bitrate: {bitrate_str}")
             print(status_msg)
 
-            # Base command arguments
             cmd_args = [
-                f'"{g.ffmpeg_path}"',
-                f'-i "{file_path}"',
+                g.ffmpeg_path,
+                "-i", file_path,
                 "-y",
-                f"-b:v {bitrate_str}",
+                "-b:v", bitrate_str,
             ]
 
             if self.use_gpu and gpu_encoder:
                 print("Using GPU")
-                cmd_args.extend([f"-c:v {gpu_encoder}"])
+                cmd_args.extend(["-c:v", gpu_encoder])
+                if gpu_encoder == "h264_vaapi":
+                    cmd_args.extend(["-vaapi_device", "/dev/dri/renderD128", "-vf", "format=nv12,hwupload"])
             else:
                 print("Using CPU")
-                cmd_args.extend(["-c:v libx264"])
+                cmd_args.extend(["-c:v", "libx264"])
 
             if i == 0:
-                cmd_args.extend(["-an", "-pass 1", "-f mp4 TEMP"])
+                cmd_args.extend(["-an", "-pass", "1", "-f", "mp4", "TEMP"])
             else:
-                cmd_args.extend(["-pass 2", f'"{output_path}"'])
+                cmd_args.extend(["-pass", "2", output_path])
 
-            cmd = " ".join(cmd_args)
-            print(f"Running command: {cmd}")
+            print(f"Running command: {' '.join(cmd_args)}")
             self.update_log.emit(status_msg)
-            self.process = subprocess.check_call(cmd, shell=False)
+            subprocess.check_call(cmd_args)
 
     def run(self):
         g.completed = []
