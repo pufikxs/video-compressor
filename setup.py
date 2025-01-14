@@ -16,18 +16,15 @@ build_exe_options = {
     ],
     "excludes": ["tkinter"],
     "optimize": 2,
-    "include_files": [("res", "res")],
+    "include_files": [("res", "res")]
 }
-
-# No base is required for Linux
-base = None
 
 executables = [
     Executable(
         "main.py",
-        base=base,
+        base=None,
         target_name=f"cheezos_video_compressor_v{g.VERSION}",
-        icon="res/icon.png",  # Remove icon or use a .png compatible with Linux, if required
+        icon="res/icon.png"
     )
 ]
 
