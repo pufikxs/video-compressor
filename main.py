@@ -24,9 +24,17 @@ from src.styles import *
 def load_settings():
     try:
         with open(os.path.join(g.res_dir, "settings.json"), "r") as f:
-            return json.load(f)
+
+            settings = json.load(f)
     except:
-        return g.DEFAULT_SETTINGS
+        settings = g.DEFAULT_SETTINGS
+    
+    # Ensure all default settings are present if using settings.json
+    for key, value in g.DEFAULT_SETTINGS.items():
+        if key not in settings:
+            settings[key] = value
+    
+    return settings
 
 
 def save_settings(settings):
@@ -93,6 +101,26 @@ class Window(QWidget):
         self.edit_size.move(FILE_SIZE_ENTRY.x, FILE_SIZE_ENTRY.y)
         self.edit_size.setEnabled(True)
 
+        # Small Buttons
+        button_values = self.settings["button_values"]
+        self.button_a = QPushButton("A", self)
+        self.button_a.resize(SIZE_BUTTON_A.w, SIZE_BUTTON_A.h)
+        self.button_a.move(SIZE_BUTTON_A.x, SIZE_BUTTON_A.y)
+        self.button_a.setStyleSheet(SIZE_BUTTONS_STYLE)
+        self.button_a.clicked.connect(lambda: self.set_size(button_values[0]))
+
+        self.button_b = QPushButton("B", self)
+        self.button_b.resize(SIZE_BUTTON_B.w, SIZE_BUTTON_B.h)
+        self.button_b.move(SIZE_BUTTON_B.x, SIZE_BUTTON_B.y)
+        self.button_b.setStyleSheet(SIZE_BUTTONS_STYLE)
+        self.button_b.clicked.connect(lambda: self.set_size(button_values[1]))
+
+        self.button_c = QPushButton("C", self)
+        self.button_c.resize(SIZE_BUTTON_C.w, SIZE_BUTTON_C.h)
+        self.button_c.move(SIZE_BUTTON_C.x, SIZE_BUTTON_C.y)
+        self.button_c.setStyleSheet(SIZE_BUTTONS_STYLE)
+        self.button_c.clicked.connect(lambda: self.set_size(button_values[2]))
+
         # GPU Label
         self.label_gpu = QLabel("Use GPU", self)
         self.label_gpu.resize(GPU_LABEL.w, GPU_LABEL.h)
@@ -137,6 +165,9 @@ class Window(QWidget):
 
         if file_path:
             self.load_file(file_path)
+
+    def set_size(self, size):
+        self.edit_size.setText(str(size))
 
     def filter_dragged_files(self, mime_data):
         files = [url.toLocalFile() for url in mime_data.urls()]
@@ -250,7 +281,7 @@ class Window(QWidget):
             # Update last_directory settings
             self.settings["last_directory"] = os.path.dirname(file_paths[0])
             save_settings(self.settings)
-            
+
             self.button_compress.setEnabled(True)
             self.button_compress.setStyleSheet(BUTTON_COMPRESS_STYLE)
             self.button_abort.setEnabled(True)

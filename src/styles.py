@@ -48,6 +48,24 @@ BUTTON_SELECT_STYLE = """
     }
 """
 
+SIZE_BUTTONS_STYLE = """
+    QPushButton {
+        background-color: #7289DA;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 5px;
+    }
+    QPushButton:hover {
+        background-color: #667BC4;
+        border: 1px solid #5B6DAE;
+    }
+    QPushButton:pressed {
+        background-color: #5B6DAE;
+        padding: 1px;
+    }
+"""
+
 BUTTON_COMPRESS_STYLE = """
     QPushButton {
         background-color: #4CAF50;
@@ -163,15 +181,36 @@ FILE_SIZE_ENTRY = Rect(
     25,
 )
 
+SIZE_BUTTON_A = Rect(
+    FILE_SIZE_ENTRY.x, 
+    FILE_SIZE_ENTRY.y + FILE_SIZE_ENTRY.h + V_GAP,
+    (FILE_SIZE_ENTRY.w - (V_GAP * 2) + 1) // 3,
+    20,
+)
+
+SIZE_BUTTON_B = Rect(
+    SIZE_BUTTON_A.x + SIZE_BUTTON_A.w + V_GAP, 
+    FILE_SIZE_ENTRY.y + FILE_SIZE_ENTRY.h + V_GAP,
+    SIZE_BUTTON_A.w,
+    SIZE_BUTTON_A.h,
+)
+
+SIZE_BUTTON_C = Rect(
+    SIZE_BUTTON_B.x + SIZE_BUTTON_B.w + V_GAP, 
+    FILE_SIZE_ENTRY.y + FILE_SIZE_ENTRY.h + V_GAP,
+    SIZE_BUTTON_A.w,
+    SIZE_BUTTON_A.h,
+)
+
 GPU_LABEL = Rect(
     H_GAP,
-    FILE_SIZE_LABEL.y + FILE_SIZE_LABEL.h + V_GAP,
+    SIZE_BUTTON_A.y + SIZE_BUTTON_A.h + V_GAP,
     COMPRESS_BUTTON.w // 2,
     25,
 )
 
 GPU_CHECKBOX = Rect(
-    FILE_SIZE_ENTRY.x + (FILE_SIZE_ENTRY.w // 2) - 12,
+    SIZE_BUTTON_A.x + (SIZE_BUTTON_A.w // 2) - 12,
     GPU_LABEL.y,
     25,
     25,

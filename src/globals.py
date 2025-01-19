@@ -5,6 +5,7 @@ DEFAULT_SETTINGS = {
   "target_size": 50.0, 
   "use_gpu": False,
   "last_directory": "",
+  "button_values": [10, 50, 100],
 }
 
 ffmpeg_path = "ffmpeg"
