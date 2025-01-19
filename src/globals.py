@@ -1,5 +1,5 @@
 VERSION = "3.1.3"
-TITLE = f"CVC v{VERSION}"
+TITLE = f"Video Compressor"
 READY_TEXT = f"Drag and Drop Videos here."
 DEFAULT_SETTINGS = {"target_size": 20.0, "use_gpu": False}
 
