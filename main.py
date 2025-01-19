@@ -50,7 +50,7 @@ def delete_bin():
 
 
 class Window(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, file_path=None) -> None:
         super().__init__()
         self.verify_directories()
         self.settings = load_settings()
@@ -132,6 +132,9 @@ class Window(QWidget):
         self.progress_bar.setStyleSheet(PROGRESS_BAR_STYLE)
 
         self.verify_ffmpeg()
+
+        if file_path:
+            self.load_file(file_path)
 
     def filter_dragged_files(self, mime_data):
         files = [url.toLocalFile() for url in mime_data.urls()]
@@ -312,9 +315,20 @@ class Window(QWidget):
         if not aborted:
             os.startfile(g.output_dir)
 
+    def load_file(self, file_path):
+        if file_path.lower().endswith(("mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "m4v")):
+            g.queue.append(file_path)
+            self.button_compress.setEnabled(True)
+            self.button_compress.setStyleSheet(BUTTON_COMPRESS_STYLE)
+            self.button_abort.setEnabled(True)
+            self.button_abort.setStyleSheet(BUTTON_ABORT_STYLE)
+            print(f"Selected: {g.queue}")
+            self.update_log(f"{g.READY_TEXT}\nSelected 1 video(s).")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = Window()
+    file_path = sys.argv[1] if len(sys.argv) > 1 else None
+    window = Window(file_path)
     window.show()
     sys.exit(app.exec())
