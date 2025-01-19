@@ -1,7 +1,12 @@
-VERSION = "3.1.3"
-TITLE = f"CVC v{VERSION}"
+VERSION = "3.2.0"
+TITLE = f"Video Compressor"
 READY_TEXT = f"Drag and Drop Videos here."
-DEFAULT_SETTINGS = {"target_size": 20.0, "use_gpu": False}
+DEFAULT_SETTINGS = {
+  "target_size": 50.0, 
+  "use_gpu": False,
+  "last_directory": "",
+  "button_values": [10, 50, 100],
+}
 
 ffmpeg_path = "ffmpeg"
 ffprobe_path = "ffprobe"
