@@ -232,10 +232,11 @@ class Window(QWidget):
             self.download_thread.start()
 
     def select_videos(self):
+        initial_dir = self.settings.get("last_directory", "")
         file_paths, _ = QFileDialog.getOpenFileNames(
             self,
             "Select Video Files",
-            "",
+            initial_dir,
             "Video Files (*.mp4 *.avi *.mkv *.mov *.wmv *.flv *.webm *.m4v);;All Files (*.*)",
         )
 
@@ -246,6 +247,10 @@ class Window(QWidget):
 
                 g.queue.append(PATH)
 
+            # Update last_directory settings
+            self.settings["last_directory"] = os.path.dirname(file_paths[0])
+            save_settings(self.settings)
+            
             self.button_compress.setEnabled(True)
             self.button_compress.setStyleSheet(BUTTON_COMPRESS_STYLE)
             self.button_abort.setEnabled(True)
