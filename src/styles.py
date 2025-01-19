@@ -2,7 +2,7 @@
 from src.rect import Rect
 
 
-WINDOW = Rect(0, 0, 250, 400)
+WINDOW = Rect(0, 0, 450, 400)
 WINDOW_HALF = Rect(0, 0, WINDOW.w // 2, WINDOW.h // 2)
 
 LABEL_STYLE = """

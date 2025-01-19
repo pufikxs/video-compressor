@@ -30,7 +30,9 @@ def load_settings():
 
 
 def save_settings(settings):
-    with open(os.path.join(g.res_dir, "settings.json"), "w") as f:
+    settings_path = os.path.join(g.res_dir, "settings.json")
+    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+    with open(settings_path, "w") as f:
         json.dump(settings, f)
 
 
