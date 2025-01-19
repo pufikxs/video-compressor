@@ -24,13 +24,23 @@ from src.styles import *
 def load_settings():
     try:
         with open(os.path.join(g.res_dir, "settings.json"), "r") as f:
-            return json.load(f)
+
+            settings = json.load(f)
     except:
-        return g.DEFAULT_SETTINGS
+        settings = g.DEFAULT_SETTINGS
+    
+    # Ensure all default settings are present if using settings.json
+    for key, value in g.DEFAULT_SETTINGS.items():
+        if key not in settings:
+            settings[key] = value
+    
+    return settings
 
 
 def save_settings(settings):
-    with open(os.path.join(g.res_dir, "settings.json"), "w") as f:
+    settings_path = os.path.join(g.res_dir, "settings.json")
+    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+    with open(settings_path, "w") as f:
         json.dump(settings, f)
 
 
@@ -50,7 +60,7 @@ def delete_bin():
 
 
 class Window(QWidget):
-    def __init__(self) -> None:
+    def __init__(self, file_path=None) -> None:
         super().__init__()
         self.verify_directories()
         self.settings = load_settings()
@@ -90,6 +100,26 @@ class Window(QWidget):
         self.edit_size.resize(FILE_SIZE_ENTRY.w, FILE_SIZE_ENTRY.h)
         self.edit_size.move(FILE_SIZE_ENTRY.x, FILE_SIZE_ENTRY.y)
         self.edit_size.setEnabled(True)
+
+        # Small Buttons
+        button_values = self.settings["button_values"]
+        self.button_a = QPushButton("A", self)
+        self.button_a.resize(SIZE_BUTTON_A.w, SIZE_BUTTON_A.h)
+        self.button_a.move(SIZE_BUTTON_A.x, SIZE_BUTTON_A.y)
+        self.button_a.setStyleSheet(SIZE_BUTTONS_STYLE)
+        self.button_a.clicked.connect(lambda: self.set_size(button_values[0]))
+
+        self.button_b = QPushButton("B", self)
+        self.button_b.resize(SIZE_BUTTON_B.w, SIZE_BUTTON_B.h)
+        self.button_b.move(SIZE_BUTTON_B.x, SIZE_BUTTON_B.y)
+        self.button_b.setStyleSheet(SIZE_BUTTONS_STYLE)
+        self.button_b.clicked.connect(lambda: self.set_size(button_values[1]))
+
+        self.button_c = QPushButton("C", self)
+        self.button_c.resize(SIZE_BUTTON_C.w, SIZE_BUTTON_C.h)
+        self.button_c.move(SIZE_BUTTON_C.x, SIZE_BUTTON_C.y)
+        self.button_c.setStyleSheet(SIZE_BUTTONS_STYLE)
+        self.button_c.clicked.connect(lambda: self.set_size(button_values[2]))
 
         # GPU Label
         self.label_gpu = QLabel("Use GPU", self)
@@ -132,6 +162,12 @@ class Window(QWidget):
         self.progress_bar.setStyleSheet(PROGRESS_BAR_STYLE)
 
         self.verify_ffmpeg()
+
+        if file_path:
+            self.load_file(file_path)
+
+    def set_size(self, size):
+        self.edit_size.setText(str(size))
 
     def filter_dragged_files(self, mime_data):
         files = [url.toLocalFile() for url in mime_data.urls()]
@@ -227,10 +263,11 @@ class Window(QWidget):
             self.download_thread.start()
 
     def select_videos(self):
+        initial_dir = self.settings.get("last_directory", "")
         file_paths, _ = QFileDialog.getOpenFileNames(
             self,
             "Select Video Files",
-            "",
+            initial_dir,
             "Video Files (*.mp4 *.avi *.mkv *.mov *.wmv *.flv *.webm *.m4v);;All Files (*.*)",
         )
 
@@ -240,6 +277,10 @@ class Window(QWidget):
                     continue
 
                 g.queue.append(PATH)
+
+            # Update last_directory settings
+            self.settings["last_directory"] = os.path.dirname(file_paths[0])
+            save_settings(self.settings)
 
             self.button_compress.setEnabled(True)
             self.button_compress.setStyleSheet(BUTTON_COMPRESS_STYLE)
@@ -312,9 +353,20 @@ class Window(QWidget):
         if not aborted:
             os.startfile(g.output_dir)
 
+    def load_file(self, file_path):
+        if file_path.lower().endswith(("mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "m4v")):
+            g.queue.append(file_path)
+            self.button_compress.setEnabled(True)
+            self.button_compress.setStyleSheet(BUTTON_COMPRESS_STYLE)
+            self.button_abort.setEnabled(True)
+            self.button_abort.setStyleSheet(BUTTON_ABORT_STYLE)
+            print(f"Selected: {g.queue}")
+            self.update_log(f"{g.READY_TEXT}\nSelected 1 video(s).")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = Window()
+    file_path = sys.argv[1] if len(sys.argv) > 1 else None
+    window = Window(file_path)
     window.show()
     sys.exit(app.exec())
